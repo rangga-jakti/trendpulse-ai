@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — TrendPulse AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #020c18; }
+    .font-display { font-family: 'Space Grotesk', sans-serif; }
+    .glass { background: rgba(10, 22, 40, 0.8); border: 1px solid rgba(20, 184, 166, 0.15); backdrop-filter: blur(20px); }
+    .neon-text { color: #2dd4bf; }
+    .btn-primary { background: linear-gradient(135deg, #0d9488, #0891b2); border: 1px solid rgba(20, 184, 166, 0.3); transition: all 0.2s; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 0 20px rgba(20,184,166,0.3); }
+    .input-field { background: rgba(15, 30, 50, 0.8); border: 1px solid rgba(30, 58, 95, 0.8); color: white; transition: border-color 0.2s; }
+    .input-field:focus { outline: none; border-color: rgba(20, 184, 166, 0.5); box-shadow: 0 0 0 3px rgba(20,184,166,0.1); }
+    .input-field::placeholder { color: #475569; }
+    .grid-bg { background-image: linear-gradient(rgba(20,184,166,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(20,184,166,0.03) 1px, transparent 1px); background-size: 40px 40px; }
+  </style>
+</head>
+<body class="min-h-screen grid-bg flex items-center justify-center p-4">
+  <div class="fixed w-96 h-96 rounded-full bg-teal-500/10 -top-20 -left-20 blur-3xl pointer-events-none"></div>
+  <div class="fixed w-96 h-96 rounded-full bg-purple-500/10 -bottom-20 -right-20 blur-3xl pointer-events-none"></div>
+
+  <div class="w-full max-w-md relative z-10">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center">
+          <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+          </svg>
+        </div>
+        <span class="font-display font-bold text-xl text-white">TrendPulse <span class="neon-text">AI</span></span>
+      </div>
+      <h1 class="font-display font-bold text-2xl text-white mb-1">Selamat Datang</h1>
+      <p class="text-slate-400 text-sm">Masuk untuk memantau tren Indonesia real-time</p>
+    </div>
+
+    <div class="glass rounded-2xl p-8">
+      {% if messages %}
+      {% for message in messages %}
+      <div class="mb-4 p-3 rounded-xl text-sm {% if message.tags == 'error' %}bg-red-500/10 border border-red-500/30 text-red-400{% else %}bg-teal-500/10 border border-teal-500/30 text-teal-400{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Username</label>
+            <input type="text" name="username" required autocomplete="username" placeholder="Masukkan username" class="input-field w-full rounded-xl px-4 py-3 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Password</label>
+            <input type="password" name="password" required autocomplete="current-password" placeholder="Masukkan password" class="input-field w-full rounded-xl px-4 py-3 text-sm">
+          </div>
+        </div>
+        <button type="submit" class="btn-primary w-full mt-6 py-3 rounded-xl text-white font-semibold text-sm">
+          Masuk ke Dashboard →
+        </button>
+      </form>
+
+      <div class="mt-6 pt-6 border-t border-slate-800 text-center">
+        <p class="text-sm text-slate-500">Belum punya akun? <a href="{% url 'accounts:register' %}" class="text-teal-400 hover:text-teal-300 font-medium transition-colors">Daftar sekarang</a></p>
+      </div>
+    </div>
+    <p class="text-center text-xs text-slate-600 mt-6">TrendPulse AI © 2026 · Powered by Groq LLM + Prophet ML</p>
+  </div>
+</body>
+</html>

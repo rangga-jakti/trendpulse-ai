@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TrendPulse AI{% endblock %} — Radar Tren Digital Indonesia</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: '#f0fdf9',
+                100: '#ccfbef',
+                200: '#99f6e0',
+                300: '#5eead4',
+                400: '#2dd4bf',
+                500: '#14b8a6',
+                600: '#0d9488',
+                700: '#0f766e',
+                800: '#115e59',
+                900: '#134e4a',
+              },
+              pulse: {
+                400: '#a78bfa',
+                500: '#8b5cf6',
+                600: '#7c3aed',
+              },
+              glow: {
+                cyan: '#06b6d4',
+                teal: '#14b8a6',
+                purple: '#8b5cf6',
+              }
+            },
+            fontFamily: {
+              display: ['Space Grotesk', 'system-ui', 'sans-serif'],
+              body: ['DM Sans', 'system-ui', 'sans-serif'],
+              mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+            },
+            animation: {
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'glow': 'glow 2s ease-in-out infinite alternate',
+              'float': 'float 6s ease-in-out infinite',
+              'scan': 'scan 4s linear infinite',
+              'shimmer': 'shimmer 2s linear infinite',
+            },
+            keyframes: {
+              glow: {
+                from: { boxShadow: '0 0 20px rgba(20, 184, 166, 0.3)' },
+                to: { boxShadow: '0 0 40px rgba(20, 184, 166, 0.6), 0 0 80px rgba(20, 184, 166, 0.2)' }
+              },
+              float: {
+                '0%, 100%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-10px)' }
+              },
+              scan: {
+                '0%': { transform: 'translateY(-100%)' },
+                '100%': { transform: 'translateY(100vh)' }
+              },
+              shimmer: {
+                '0%': { backgroundPosition: '-200% 0' },
+                '100%': { backgroundPosition: '200% 0' }
+              }
+            },
+            backdropBlur: {
+              xs: '2px',
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <style>
+      :root {
+        --bg-primary: #020817;
+        --bg-secondary: #0a1628;
+        --bg-card: rgba(10, 22, 40, 0.8);
+        --border-subtle: rgba(20, 184, 166, 0.15);
+        --border-glow: rgba(20, 184, 166, 0.4);
+        --text-primary: #e2e8f0;
+        --text-secondary: #94a3b8;
+        --text-accent: #2dd4bf;
+        --glow-primary: rgba(20, 184, 166, 0.5);
+        --glow-secondary: rgba(139, 92, 246, 0.4);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: 'DM Sans', system-ui, sans-serif;
+        background-image: 
+          radial-gradient(ellipse at 20% 50%, rgba(20, 184, 166, 0.06) 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+          radial-gradient(ellipse at 50% 100%, rgba(6, 182, 212, 0.04) 0%, transparent 50%);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* Grid overlay */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image: 
+          linear-gradient(rgba(20, 184, 166, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(20, 184, 166, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* Glassmorphism card */
+      .glass-card {
+        background: rgba(10, 22, 40, 0.75);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(20, 184, 166, 0.12);
+        border-radius: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .glass-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(20, 184, 166, 0.05) 0%, transparent 50%, rgba(139, 92, 246, 0.03) 100%);
+        pointer-events: none;
+      }
+
+      .glass-card:hover {
+        border-color: rgba(20, 184, 166, 0.3);
+        box-shadow: 0 0 30px rgba(20, 184, 166, 0.1), 0 20px 40px rgba(0, 0, 0, 0.4);
+        transform: translateY(-2px);
+      }
+
+      /* Neon text */
+      .neon-text {
+        color: #2dd4bf;
+        text-shadow: 0 0 20px rgba(45, 212, 191, 0.5), 0 0 40px rgba(45, 212, 191, 0.2);
+      }
+
+      .neon-purple {
+        color: #a78bfa;
+        text-shadow: 0 0 20px rgba(167, 139, 250, 0.5);
+      }
+
+      /* Glow button */
+      .btn-glow {
+        background: linear-gradient(135deg, #0d9488, #0891b2);
+        border: 1px solid rgba(20, 184, 166, 0.4);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .btn-glow::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+      }
+
+      .btn-glow:hover {
+        box-shadow: 0 0 20px rgba(20, 184, 166, 0.5), 0 0 40px rgba(20, 184, 166, 0.2);
+        transform: translateY(-1px);
+      }
+
+      /* Virality score ring */
+      .score-ring {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Trend badge */
+      .trend-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 100px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .badge-rising { background: rgba(20, 184, 166, 0.15); color: #2dd4bf; border: 1px solid rgba(20, 184, 166, 0.3); }
+      .badge-breaking { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); animation: pulse 2s infinite; }
+      .badge-stable { background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.2); }
+      .badge-declining { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+      /* Sidebar */
+      .sidebar {
+        background: rgba(5, 12, 24, 0.9);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(20, 184, 166, 0.1);
+      }
+
+      /* Nav item */
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        border-radius: 10px;
+        color: #64748b;
+        transition: all 0.2s;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .nav-item:hover, .nav-item.active {
+        background: rgba(20, 184, 166, 0.1);
+        color: #2dd4bf;
+        border: 1px solid rgba(20, 184, 166, 0.2);
+      }
+
+      /* Loading animation */
+      .ai-loading {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #2dd4bf;
+      }
+
+      .ai-loading .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #2dd4bf;
+        animation: bounce 1.4s infinite ease-in-out;
+      }
+
+      .ai-loading .dot:nth-child(1) { animation-delay: -0.32s; }
+      .ai-loading .dot:nth-child(2) { animation-delay: -0.16s; }
+
+      @keyframes bounce {
+        0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+        40% { transform: scale(1); opacity: 1; }
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(20, 184, 166, 0.2); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(20, 184, 166, 0.4); }
+
+      /* HTMX loading indicator */
+      .htmx-indicator { display: none; }
+      .htmx-request .htmx-indicator { display: flex; }
+      .htmx-request.htmx-indicator { display: flex; }
+
+      /* Scan line animation */
+      .scan-line {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(20, 184, 166, 0.4), transparent);
+        animation: scan-horizontal 8s linear infinite;
+        pointer-events: none;
+        z-index: 1000;
+      }
+
+      @keyframes scan-horizontal {
+        0% { transform: translateY(-2px); opacity: 0; }
+        5% { opacity: 1; }
+        95% { opacity: 1; }
+        100% { transform: translateY(100vh); opacity: 0; }
+      }
+
+      /* Metric card glow effect */
+      .metric-glow-teal { box-shadow: 0 0 20px rgba(20, 184, 166, 0.15); }
+      .metric-glow-purple { box-shadow: 0 0 20px rgba(139, 92, 246, 0.15); }
+      .metric-glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.15); }
+      .metric-glow-amber { box-shadow: 0 0 20px rgba(245, 158, 11, 0.15); }
+
+      /* Chart container */
+      .chart-container {
+        position: relative;
+        background: rgba(5, 12, 24, 0.5);
+        border-radius: 12px;
+        padding: 16px;
+        border: 1px solid rgba(20, 184, 166, 0.08);
+      }
+
+      /* Tag chip */
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        background: rgba(20, 184, 166, 0.08);
+        border: 1px solid rgba(20, 184, 166, 0.2);
+        border-radius: 100px;
+        font-size: 0.75rem;
+        color: #5eead4;
+        font-weight: 500;
+      }
+
+      /* Platform icons */
+      .platform-youtube { color: #ff4444; }
+      .platform-tiktok { color: #00f2ea; }
+      .platform-blog { color: #f59e0b; }
+      .platform-business { color: #34d399; }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .sidebar { display: none; }
+      }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body x-data="{ sidebarOpen: true }">
+  <!-- Scan line effect -->
+  <div class="scan-line"></div>
+
+  <div class="flex min-h-screen relative z-10">
+    <!-- Sidebar -->
+    <aside class="sidebar w-64 fixed left-0 top-0 bottom-0 flex flex-col z-50 hidden lg:flex">
+      <!-- Logo -->
+      <div class="p-6 border-b border-teal-900/30">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-teal-500/30">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+            </svg>
+          </div>
+          <div>
+            <div class="font-display font-bold text-white text-sm tracking-wide">TrendPulse</div>
+            <div class="text-teal-400 text-xs font-mono">AI v2.0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status indicator -->
+      <div class="px-6 py-3 border-b border-teal-900/20">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></div>
+          <span class="text-xs text-slate-400 font-mono">Live Monitoring</span>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+        <div class="text-xs text-slate-600 uppercase tracking-widest font-semibold px-4 py-2 mb-1">Navigasi</div>
+        
+        <a href="{% url 'dashboard:index' %}" class="nav-item {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+          </svg>
+          Dashboard
+        </a>
+
+        <a href="#" class="nav-item">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+          </svg>
+          Radar Tren
+        </a>
+
+        <a href="#" class="nav-item">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+          Analisis AI
+        </a>
+
+        <a href="#" class="nav-item">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          Prediksi ML
+        </a>
+
+        <a href="#" class="nav-item">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          </svg>
+          Ide Konten
+        </a>
+
+        <div class="text-xs text-slate-600 uppercase tracking-widest font-semibold px-4 py-2 mt-4 mb-1">Sistem</div>
+
+        <a href="#" class="nav-item" 
+           hx-post="{% url 'dashboard:manual_fetch' %}"
+           hx-confirm="Mulai pengambilan data baru?"
+           hx-swap="none">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Perbarui Data
+        </a>
+
+        <a href="/admin/" class="nav-item">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          Pengaturan
+        </a>
+      </nav>
+
+      <!-- Footer -->
+      <div class="p-4 border-t border-teal-900/20">
+        <div class="text-xs text-slate-600 text-center font-mono">
+          TrendPulse AI © 2026<br>
+          <span class="text-teal-700">Powered by Groq LLM + Prophet ML</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 lg:ml-64">
+      <!-- Top bar -->
+      <header class="sticky top-0 z-40 glass-card rounded-none border-x-0 border-t-0 px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <!-- Mobile menu button -->
+            <button class="lg:hidden text-slate-400 hover:text-teal-400">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+              </svg>
+            </button>
+            
+            <div>
+              <h1 class="font-display font-semibold text-white text-lg">{% block page_title %}Dashboard{% endblock %}</h1>
+              <p class="text-xs text-slate-500 font-mono" id="last-updated">
+                Memuat data...
+              </p>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <!-- Live indicator -->
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20">
+              <div class="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></div>
+              <span class="text-xs text-teal-400 font-medium font-mono">LIVE</span>
+            </div>
+            
+            <!-- Refresh button -->
+            <button onclick="window.location.reload()" 
+                    class="p-2 rounded-xl text-slate-400 hover:text-teal-400 hover:bg-teal-500/10 transition-all">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page content -->
+      <div class="p-6">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Update timestamp
+    document.getElementById('last-updated').textContent = 
+      'Update terakhir: ' + new Date().toLocaleString('id-ID', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+
+    // Chart.js global defaults for dark theme
+    if (typeof Chart !== 'undefined') {
+      Chart.defaults.color = '#64748b';
+      Chart.defaults.borderColor = 'rgba(20, 184, 166, 0.08)';
+      Chart.defaults.font.family = "'DM Sans', system-ui, sans-serif";
+    }
+
+    // HTMX notifications
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+      if (evt.detail.xhr.status === 200) {
+        showNotif('Berhasil diperbarui', 'success');
+      }
+    });
+
+    function showNotif(msg, type = 'success') {
+      const notif = document.createElement('div');
+      notif.className = `fixed bottom-6 right-6 px-4 py-3 rounded-xl text-sm font-medium z-50 transition-all duration-300 ${
+        type === 'success' 
+          ? 'bg-teal-500/20 border border-teal-500/30 text-teal-300' 
+          : 'bg-red-500/20 border border-red-500/30 text-red-300'
+      }`;
+      notif.textContent = msg;
+      document.body.appendChild(notif);
+      setTimeout(() => notif.style.opacity = '0', 2500);
+      setTimeout(() => notif.remove(), 3000);
+    }
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

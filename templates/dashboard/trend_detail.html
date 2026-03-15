@@ -1,0 +1,377 @@
+{% extends "base/base.html" %}
+
+{% block title %}{{ topic.keyword }}{% endblock %}
+{% block page_title %}Detail Tren: {{ topic.keyword }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="flex items-center gap-2 mb-6 text-sm">
+  <a href="{% url 'dashboard:index' %}" class="text-slate-500 hover:text-teal-400 transition-colors">Dashboard</a>
+  <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+  </svg>
+  <span class="text-teal-400">{{ topic.keyword }}</span>
+</div>
+
+<!-- Hero section -->
+<div class="glass-card p-6 mb-6 relative overflow-hidden">
+  <!-- Background glow -->
+  <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-teal-500/5 blur-3xl pointer-events-none"></div>
+  <div class="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-purple-500/5 blur-3xl pointer-events-none"></div>
+  
+  <div class="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+    <div>
+      <div class="flex items-center gap-3 mb-3">
+        <span class="chip">{{ topic.get_category_display }}</span>
+        {% if topic.is_breaking %}
+        <span class="trend-badge badge-breaking">🔥 Breaking</span>
+        {% endif %}
+        <span class="trend-badge badge-rising">{{ topic.get_source_display }}</span>
+      </div>
+      
+      <h1 class="font-display text-3xl font-bold text-white mb-2">{{ topic.keyword }}</h1>
+      
+      <div class="flex flex-wrap items-center gap-4 text-sm">
+        <div class="flex items-center gap-1.5 text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Pertama terdeteksi {{ topic.first_detected|timesince }} lalu
+        </div>
+        <div class="flex items-center gap-1.5 text-slate-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Diperbarui {{ topic.last_updated|timesince }} lalu
+        </div>
+      </div>
+    </div>
+
+    <!-- Key metrics -->
+    <div class="flex gap-4">
+      <div class="text-center p-4 rounded-xl bg-teal-500/5 border border-teal-500/15">
+        <div class="text-2xl font-bold neon-text font-mono">{{ topic.current_interest|floatformat:0 }}</div>
+        <div class="text-xs text-slate-500 mt-1">Interest Score</div>
+      </div>
+      <div class="text-center p-4 rounded-xl bg-purple-500/5 border border-purple-500/15">
+        <div class="text-2xl font-bold neon-purple font-mono">
+          {% if topic.growth_rate > 0 %}+{% endif %}{{ topic.growth_rate|floatformat:0 }}%
+        </div>
+        <div class="text-xs text-slate-500 mt-1">Growth Rate</div>
+      </div>
+      <div class="text-center p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/15">
+        <div class="text-2xl font-bold text-cyan-400 font-mono">{{ virality_score|floatformat:0 }}</div>
+        <div class="text-xs text-slate-500 mt-1">Virality Score</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main grid -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+  <!-- LEFT: Charts & Data (2 cols) -->
+  <div class="xl:col-span-2 space-y-6">
+
+    <!-- Historical Interest Chart -->
+    <div class="glass-card p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-display font-semibold text-white">Grafik Interest Historis</h2>
+        <span class="text-xs text-slate-500">Data dari Google Trends</span>
+      </div>
+      <div class="chart-container" style="height: 200px;">
+        <canvas id="historicalChart"></canvas>
+      </div>
+    </div>
+
+    <!-- AI Analysis Panel -->
+    <div class="glass-card p-5" id="ai-insight-container">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          <h2 class="font-display font-semibold text-white">Analisis AI</h2>
+        </div>
+        
+        {% if not ai_insight %}
+        <button onclick="generateAnalysis({{ topic.id }})"
+                id="btn-generate-analysis"
+                class="btn-glow text-xs flex items-center gap-2">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          Generate Analisis
+        </button>
+        {% endif %}
+      </div>
+
+      <!-- Loading state -->
+      <div id="ai-loading" class="htmx-indicator flex items-center gap-3 py-4 text-sm text-teal-400">
+        <div class="ai-loading">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+        AI sedang menganalisis tren ini...
+      </div>
+
+      {% if ai_insight %}
+      {% include "partials/ai_insight_panel.html" with insight=ai_insight %}
+      {% else %}
+      <div class="flex flex-col items-center py-8 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-3">
+          <svg class="w-7 h-7 text-purple-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+        </div>
+        <p class="text-slate-400 text-sm font-medium">Analisis AI belum dibuat</p>
+        <p class="text-slate-600 text-xs mt-1">Klik "Generate Analisis" untuk mendapatkan insight mendalam dari AI</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ML Prediction Panel -->
+    <div class="glass-card p-5" id="ml-prediction-container">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+          <h2 class="font-display font-semibold text-white">Prediksi ML (Prophet)</h2>
+        </div>
+        
+        {% if not ml_prediction %}
+        <button onclick="generatePrediction({{ topic.id }})"
+                id="btn-generate-prediction"
+                class="btn-glow text-xs">
+          Run Prediksi
+        </button>
+        {% endif %}
+      </div>
+
+      <div id="ml-loading" class="htmx-indicator flex items-center gap-3 py-4 text-sm text-cyan-400">
+        <div class="ai-loading">
+          <div class="dot" style="background:#06b6d4;"></div>
+          <div class="dot" style="background:#06b6d4;"></div>
+          <div class="dot" style="background:#06b6d4;"></div>
+        </div>
+        Model ML sedang memproses data...
+      </div>
+
+      {% if ml_prediction %}
+      {% include "partials/prediction_panel.html" with prediction=ml_prediction %}
+      {% else %}
+      <div class="flex flex-col items-center py-8 text-center">
+        <p class="text-slate-400 text-sm font-medium">Prediksi belum tersedia</p>
+        <p class="text-slate-600 text-xs mt-1">Jalankan model Prophet untuk melihat proyeksi 7-30 hari</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Sidebar -->
+  <div class="space-y-5">
+
+    <!-- Related News -->
+    <div class="glass-card p-5">
+      <h2 class="font-display font-semibold text-white text-sm mb-4">📰 Berita Terkait</h2>
+      <div class="space-y-3">
+        {% for article in news_articles %}
+        <a href="{{ article.url }}" target="_blank" rel="noopener" class="block group">
+          <div class="p-3 rounded-xl bg-slate-800/40 hover:bg-amber-500/5 border border-transparent hover:border-amber-500/20 transition-all">
+            <p class="text-xs font-medium text-slate-300 group-hover:text-amber-300 transition-colors leading-tight line-clamp-2">{{ article.title }}</p>
+            <div class="flex items-center justify-between mt-2">
+              <span class="text-xs text-slate-600">{{ article.source_name }}</span>
+              <span class="text-xs text-slate-600 font-mono">{{ article.published_at|timesince }} lalu</span>
+            </div>
+          </div>
+        </a>
+        {% empty %}
+        <p class="text-xs text-slate-500 text-center py-4">Belum ada berita terkait</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Content Ideas -->
+    {% if content_ideas %}
+    <div class="glass-card p-5">
+      <h2 class="font-display font-semibold text-white text-sm mb-4">💡 Ide Konten AI</h2>
+      
+      <div x-data="{ activeTab: 'youtube' }">
+        <!-- Platform tabs -->
+        <div class="flex gap-1 mb-4 p-1 bg-slate-800/50 rounded-xl">
+          <button @click="activeTab = 'youtube'"
+                  :class="activeTab === 'youtube' ? 'bg-teal-500/20 text-teal-300 border-teal-500/30' : 'text-slate-500 hover:text-slate-300'"
+                  class="flex-1 py-1.5 rounded-lg text-xs font-medium border border-transparent transition-all">▶️</button>
+          <button @click="activeTab = 'tiktok'"
+                  :class="activeTab === 'tiktok' ? 'bg-teal-500/20 text-teal-300 border-teal-500/30' : 'text-slate-500 hover:text-slate-300'"
+                  class="flex-1 py-1.5 rounded-lg text-xs font-medium border border-transparent transition-all">🎵</button>
+          <button @click="activeTab = 'blog'"
+                  :class="activeTab === 'blog' ? 'bg-teal-500/20 text-teal-300 border-teal-500/30' : 'text-slate-500 hover:text-slate-300'"
+                  class="flex-1 py-1.5 rounded-lg text-xs font-medium border border-transparent transition-all">📝</button>
+          <button @click="activeTab = 'business'"
+                  :class="activeTab === 'business' ? 'bg-teal-500/20 text-teal-300 border-teal-500/30' : 'text-slate-500 hover:text-slate-300'"
+                  class="flex-1 py-1.5 rounded-lg text-xs font-medium border border-transparent transition-all">💼</button>
+        </div>
+
+        {% for platform_key in platforms %}
+        <div x-show="activeTab === '{{ platform_key }}'" class="space-y-3">
+          {% for idea in content_ideas %}
+          {% if idea.platform == platform_key %}
+          <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/30">
+            <p class="text-sm font-semibold text-white leading-tight">{{ idea.title }}</p>
+            <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">{{ idea.description|truncatewords:20 }}</p>
+            {% if idea.hooks %}
+            <div class="flex flex-wrap gap-1 mt-2">
+              {% for hook in idea.hooks|slice:":2" %}
+              <span class="chip text-xs">{{ hook|truncatewords:5 }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+            <div class="flex items-center justify-between mt-2">
+              <span class="text-xs {% if idea.difficulty == 'easy' %}text-teal-400{% elif idea.difficulty == 'medium' %}text-amber-400{% else %}text-red-400{% endif %}">
+                {{ idea.get_difficulty_display }}
+              </span>
+              {% if idea.estimated_reach %}
+              <span class="text-xs text-slate-600">{{ idea.estimated_reach }}</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chartData = {{ chart_data|safe }};
+const predictionData = {{ prediction_chart|safe }};
+
+// Get CSRF token
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function generateAnalysis(topicId) {
+  const btn = document.getElementById('btn-generate-analysis');
+  const container = document.getElementById('ai-insight-container');
+  const loading = document.getElementById('ai-loading');
+
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Menganalisis...'; }
+  if (loading) loading.style.display = 'flex';
+
+  fetch(`/api/generate-analysis/${topicId}/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken'),
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    credentials: 'same-origin',
+  })
+  .then(r => r.text())
+  .then(html => {
+    if (container) container.innerHTML = html;
+  })
+  .catch(err => {
+    if (container) container.innerHTML = '<p class="text-red-400 text-sm p-4">Error: ' + err.message + '</p>';
+  });
+}
+
+function generatePrediction(topicId) {
+  const btn = document.getElementById('btn-generate-prediction');
+  const container = document.getElementById('ml-prediction-container');
+  const loading = document.getElementById('ml-loading');
+
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Memproses...'; }
+  if (loading) loading.style.display = 'flex';
+
+  fetch(`/api/generate-prediction/${topicId}/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken'),
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    credentials: 'same-origin',
+  })
+  .then(r => r.text())
+  .then(html => {
+    if (container) container.innerHTML = html;
+  })
+  .catch(err => {
+    if (container) container.innerHTML = '<p class="text-red-400 text-sm p-4">Error: ' + err.message + '</p>';
+  });
+}
+
+// Historical chart
+if (chartData.labels && chartData.labels.length > 0) {
+  const ctx = document.getElementById('historicalChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: chartData.labels,
+        datasets: [{
+          label: 'Interest Score',
+          data: chartData.values,
+          borderColor: 'rgba(20, 184, 166, 0.9)',
+          backgroundColor: 'rgba(20, 184, 166, 0.05)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(10, 22, 40, 0.9)',
+            borderColor: 'rgba(20, 184, 166, 0.3)',
+            borderWidth: 1,
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#475569', maxTicksLimit: 8, font: { size: 10 } }
+          },
+          y: {
+            min: 0, max: 100,
+            grid: { color: 'rgba(20, 184, 166, 0.06)' },
+            ticks: { color: '#475569', font: { size: 10 } }
+          }
+        }
+      }
+    });
+  }
+}
+</script>
+{% endblock %}

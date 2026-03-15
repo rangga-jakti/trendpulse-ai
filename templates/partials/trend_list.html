@@ -1,0 +1,26 @@
+{% for topic in trending_topics %}
+<div class="flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-all group cursor-pointer"
+     onclick="window.location.href='{% url 'dashboard:trend_detail' topic.slug %}'">
+  <div class="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700/50 flex items-center justify-center shrink-0">
+    <span class="text-xs font-mono text-slate-500">{{ forloop.counter }}</span>
+  </div>
+  <div class="flex-1 min-w-0">
+    <p class="text-sm font-semibold text-white group-hover:text-teal-300 transition-colors truncate">
+      {{ topic.keyword }}
+      {% if topic.is_breaking %}<span class="ml-1 text-xs text-red-400">🔥</span>{% endif %}
+    </p>
+    <p class="text-xs text-slate-500">{{ topic.get_category_display }} · {{ topic.source }}</p>
+  </div>
+  <div class="flex items-center gap-3 shrink-0">
+    <div class="w-20 bg-slate-800 rounded-full h-1.5">
+      <div class="h-1.5 rounded-full bg-teal-500" style="width: {{ topic.current_interest }}%"></div>
+    </div>
+    <span class="text-xs font-mono w-8 text-right text-slate-300">{{ topic.current_interest }}</span>
+    <span class="text-xs font-mono w-12 text-right {% if topic.growth_rate > 0 %}text-teal-400{% elif topic.growth_rate < 0 %}text-red-400{% else %}text-slate-500{% endif %}">
+      {% if topic.growth_rate > 0 %}▲{% elif topic.growth_rate < 0 %}▼{% endif %}{{ topic.growth_rate|floatformat:0 }}%
+    </span>
+  </div>
+</div>
+{% empty %}
+<div class="text-center py-8 text-slate-500 text-sm">Tidak ada tren yang cocok</div>
+{% endfor %}

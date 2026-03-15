@@ -1,0 +1,121 @@
+{% if prediction %}
+<div class="space-y-4">
+  
+  <!-- Prediction summary -->
+  <div class="grid grid-cols-3 gap-3">
+    <div class="p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/15 text-center">
+      <div class="text-lg font-bold text-cyan-400 font-mono">{{ prediction.predicted_peak|floatformat:0 }}</div>
+      <div class="text-xs text-slate-500 mt-0.5">Puncak Prediksi</div>
+    </div>
+    <div class="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30 text-center">
+      <div class="text-sm font-bold font-mono
+        {% if prediction.trend_direction == 'rising' %}text-teal-400
+        {% elif prediction.trend_direction == 'declining' %}text-red-400
+        {% elif prediction.trend_direction == 'volatile' %}text-amber-400
+        {% else %}text-slate-400{% endif %}">
+        {% if prediction.trend_direction == 'rising' %}▲ Naik
+        {% elif prediction.trend_direction == 'declining' %}▼ Turun
+        {% elif prediction.trend_direction == 'volatile' %}⚡ Volatile
+        {% else %}→ Stabil{% endif %}
+      </div>
+      <div class="text-xs text-slate-500 mt-0.5">Arah Tren</div>
+    </div>
+    <div class="p-3 rounded-xl bg-slate-800/50 border border-slate-700/30 text-center">
+      <div class="text-sm font-bold text-slate-300 font-mono">{{ prediction.confidence_score|floatformat:2 }}</div>
+      <div class="text-xs text-slate-500 mt-0.5">Kepercayaan</div>
+    </div>
+  </div>
+
+  <!-- Forecast chart -->
+  {% if chart_data %}
+  <div class="chart-container" style="height: 160px;">
+    <canvas id="forecastChart"></canvas>
+  </div>
+  {% endif %}
+
+  <!-- Model info -->
+  <div class="flex items-center justify-between text-xs text-slate-600">
+    <span>Model: <span class="font-mono text-slate-500">{{ prediction.model_type }}</span></span>
+    <span>Training data: {{ prediction.training_data_points }} titik</span>
+    <span>MAE: {{ prediction.mae|floatformat:2 }}</span>
+  </div>
+</div>
+
+{% if chart_data %}
+<script>
+(function() {
+  const data = {{ chart_data|safe }};
+  if (!data.labels || data.labels.length === 0) return;
+
+  const ctx = document.getElementById('forecastChart');
+  if (!ctx) return;
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [
+        {
+          label: 'Prediksi',
+          data: data.values,
+          borderColor: 'rgba(6, 182, 212, 0.9)',
+          backgroundColor: 'rgba(6, 182, 212, 0.05)',
+          borderWidth: 2,
+          fill: '+1',
+          tension: 0.4,
+          pointRadius: 2,
+        },
+        {
+          label: 'Batas Atas',
+          data: data.upper,
+          borderColor: 'transparent',
+          backgroundColor: 'rgba(6, 182, 212, 0.06)',
+          fill: '-1',
+          tension: 0.4,
+          pointRadius: 0,
+        },
+        {
+          label: 'Batas Bawah',
+          data: data.lower,
+          borderColor: 'transparent',
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(10, 22, 40, 0.9)',
+          borderColor: 'rgba(6, 182, 212, 0.3)',
+          borderWidth: 1,
+          callbacks: {
+            label: ctx => `Prediksi: ${ctx.raw?.toFixed(1)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#475569', font: { size: 10 } }
+        },
+        y: {
+          min: 0, max: 100,
+          grid: { color: 'rgba(6, 182, 212, 0.06)' },
+          ticks: { color: '#475569', font: { size: 10 } }
+        }
+      }
+    }
+  });
+})();
+</script>
+{% endif %}
+
+{% else %}
+<p class="text-slate-500 text-sm text-center py-4">Data prediksi tidak tersedia</p>
+{% endif %}
