@@ -71,8 +71,6 @@ def dashboard(request):
 
     return render(request, 'dashboard/index.html', context)
 
-
-@login_required
 def trend_detail(request, slug):
     """Trend detail page with full AI analysis"""
     topic = get_object_or_404(
@@ -119,9 +117,6 @@ def trend_detail(request, slug):
     return render(request, 'dashboard/trend_detail.html', context)
 
 
-from django.views.decorators.csrf import csrf_exempt
-
-@csrf_exempt
 @require_http_methods(['POST'])
 def generate_ai_analysis(request, topic_id):
     """HTMX endpoint: generate AI analysis for a topic"""
@@ -192,8 +187,6 @@ def generate_ai_analysis(request, topic_id):
             return render(request, 'partials/error_panel.html', {'error': str(e)})
         return JsonResponse({'error': str(e)}, status=500)
 
-
-@csrf_exempt
 @require_http_methods(['POST'])
 def generate_ml_prediction(request, topic_id):
     """HTMX endpoint: run ML prediction for a topic"""

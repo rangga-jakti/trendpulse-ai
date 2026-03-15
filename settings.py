@@ -19,16 +19,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_apscheduler',
     # Third party
     'django_htmx',
     # TrendPulse Apps
     'apps.trends',
+    'django_apscheduler',
     'apps.analytics',
     'apps.ai_engine',
     'apps.ml_engine',
     'apps.dashboard',
+    'apps.accounts',
 ]
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -61,6 +66,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'trendpulse.wsgi.application'
+
+import dj_database_url
 
 # Database
 DATABASES = {
@@ -144,8 +151,3 @@ VIRALITY_SCORE_THRESHOLD = config('VIRALITY_SCORE_THRESHOLD', default=60, cast=i
 # LLM Model to use
 LLM_MODEL = config('LLM_MODEL', default='llama-3.3-70b-versatile')
 LLM_MAX_TOKENS = 1024
-
-#LOGIN
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/login/'
