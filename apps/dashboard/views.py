@@ -8,17 +8,11 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.core.cache import cache
-from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
-
-from django.contrib.auth.decorators import login_required
-
-@login_required
-@login_required
 def dashboard(request):
     """Main dashboard view"""
     from apps.trends.models import TrendTopic, NewsArticle
