@@ -1,4 +1,4 @@
-# 🔥 TrendPulse AI
+# TrendPulse AI
 
 > Real-time Indonesian internet trend radar powered by AI & ML
 
@@ -9,23 +9,23 @@
 
 ---
 
-## ✨ Features
+## Features
 
 | Feature | Description |
 |--------|-------------|
-| 🔍 **Real-time Radar** | Live trending topics from Google Trends Indonesia |
-| 🔥 **Breaking Trends** | Instant detection of sudden viral spikes |
-| 🤖 **AI Analysis** | Groq LLaMA 3.3-70B explains why topics trend |
-| 📈 **ML Prediction** | Prophet forecasts trend trajectory 7-30 days ahead |
-| 💡 **Content Ideas** | AI-generated ideas for YouTube, TikTok, Blog & Business |
-| 📰 **Live News** | Related news fetched from Google News RSS |
-| ⚡ **Virality Score** | 0-100 score based on search volume, growth & momentum |
-| 📊 **Export CSV** | Download all trend data for deeper analysis |
-| 🔐 **Auth System** | Login & register with full user management |
+| **Real-time Radar** | Live trending topics from Google Trends Indonesia |
+| **Breaking Trends** | Instant detection of sudden viral spikes |
+| **AI Analysis** | Groq LLaMA 3.3-70B explains why topics trend |
+| **ML Prediction** | Prophet forecasts trend trajectory 7-30 days ahead |
+| **Content Ideas** | AI-generated ideas for YouTube, TikTok, Blog & Business |
+| **Live News** | Related news fetched from Google News RSS |
+| **Virality Score** | 0-100 score based on search volume, growth & momentum |
+| **Export CSV** | Download all trend data for deeper analysis |
+| **Auth System** | Login & register with full user management |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Python 3.12+
@@ -87,7 +87,7 @@ LLM_MODEL=llama-3.3-70b-versatile
 
 ---
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 **Backend:** Python 3.12, Django 5.0, PostgreSQL  
 **AI/ML:** Groq LLaMA 3.3-70B, Prophet, scikit-learn  
@@ -96,10 +96,10 @@ LLM_MODEL=llama-3.3-70b-versatile
 
 ---
 
-## 📄 License
+## License
 
 MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-<p align="center">Built with ❤️ for the Indonesian digital ecosystem</p>
+<p align="center">Built for the Indonesian digital ecosystem</p>
