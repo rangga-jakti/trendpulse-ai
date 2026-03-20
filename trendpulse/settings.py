@@ -21,7 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_apscheduler',
     # Third party
-    'django_htmx',
+    
     # TrendPulse Apps
     'apps.trends',
     'apps.analytics',
